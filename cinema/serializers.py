@@ -116,7 +116,7 @@ class TicketSerializer(serializers.ModelSerializer):
 
 class OrderSerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField(read_only=True)
-    tickets = TicketSerializer(many=True)
+    tickets = TicketSerializer(read_only=True, many=True)
 
     class Meta:
         model = Order

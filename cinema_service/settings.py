@@ -42,7 +42,6 @@ INSTALLED_APPS = [
     "rest_framework",
     "cinema",
     "user",
-    "django_extensions",
 ]
 
 MIDDLEWARE = [
