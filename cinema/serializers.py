@@ -34,14 +34,14 @@ class MovieSerializer(serializers.ModelSerializer):
         many=True,
         write_only=True,
         queryset=Genre.objects.all(),
-        source='genres',
+        source="genres",
         required=True
     )
     actors_ids = serializers.PrimaryKeyRelatedField(
         many=True,
         write_only=True,
         queryset=Actor.objects.all(),
-        source='actors',
+        source="actors",
         required=True
     )
 
@@ -54,7 +54,8 @@ class MovieSerializer(serializers.ModelSerializer):
 
     def validate_duration(self, value):
         if value <= 0:
-            raise serializers.ValidationError("Duration must be a positive integer.")
+            raise serializers.ValidationError(
+                "Duration must be a positive integer.")
         return value
 
     def create(self, validated_data):
@@ -88,15 +89,17 @@ class MovieSessionSerializer(serializers.ModelSerializer):
     movie = serializers.StringRelatedField()
     cinema_hall = serializers.StringRelatedField()
     cinema_hall_capacity = serializers.IntegerField(
-        source='cinema_hall.capacity', read_only=True
+        source="cinema_hall.capacity", read_only=True
     )
-    movie_title = serializers.CharField(source='movie.title', read_only=True)
-    cinema_hall_name = serializers.CharField(source='cinema_hall.name', read_only=True)
+    movie_title = serializers.CharField(source="movie.title", read_only=True)
+    cinema_hall_name = serializers.CharField(
+        source="cinema_hall.name", read_only=True)
     movie_id = serializers.PrimaryKeyRelatedField(
-        queryset=Movie.objects.all(), write_only=True, source='movie'
+        queryset=Movie.objects.all(), write_only=True, source="movie"
     )
     cinema_hall_id = serializers.PrimaryKeyRelatedField(
-        queryset=CinemaHall.objects.all(), write_only=True, source='cinema_hall'
+        queryset=CinemaHall.objects.all(),
+        write_only=True, source="cinema_hall"
     )
 
     class Meta:
