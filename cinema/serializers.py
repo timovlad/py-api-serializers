@@ -16,23 +16,16 @@ class GenreSerializer(serializers.ModelSerializer):
 
 
 class ActorSerializer(serializers.ModelSerializer):
-    full_name = serializers.SerializerMethodField()
+    full_name = serializers.ReadOnlyField()
 
     class Meta:
         model = Actor
         fields = ["id", "first_name", "last_name", "full_name"]
 
-    def get_full_name(self, obj):
-        return f"{obj.first_name} {obj.last_name}"
-
 
 class MovieSerializer(serializers.ModelSerializer):
-    genres = serializers.SlugRelatedField(
-        many=True,
-        read_only=True,
-        slug_field="name"
-    )
-    actors = ActorSerializer(many=True, read_only=True)
+    genres = GenreSerializer(many=True, read_only=True)
+    actors = serializers.StringRelatedField(many=True, read_only=True)
     genres_ids = serializers.PrimaryKeyRelatedField(
         many=True,
         write_only=True,
@@ -53,6 +46,11 @@ class MovieSerializer(serializers.ModelSerializer):
             "genres", "actors", "genres_ids", "actors_ids"
         ]
 
+    def validate_duration(self, value):
+        if value <= 0:
+            raise serializers.ValidationError("Duration must be a positive integer.")
+        return value
+
     def create(self, validated_data):
         genres = validated_data.pop("genres", [])
         actors = validated_data.pop("actors", [])
@@ -72,6 +70,7 @@ class MovieSerializer(serializers.ModelSerializer):
         return instance
 
 
+
 class CinemaHallSerializer(serializers.ModelSerializer):
     class Meta:
         model = CinemaHall
@@ -79,23 +78,26 @@ class CinemaHallSerializer(serializers.ModelSerializer):
 
 
 class MovieSessionSerializer(serializers.ModelSerializer):
+    movie_title = serializers.CharField(source='movie.title', read_only=True)
+    cinema_hall_name = serializers.CharField(source='cinema_hall.name', read_only=True)
+    cinema_hall_capacity = serializers.IntegerField(source='cinema_hall.capacity', read_only=True)
     movie = MovieSerializer(read_only=True)
     movie_id = serializers.PrimaryKeyRelatedField(
-        source="movie", queryset=Movie.objects.all(), write_only=True
+        source='movie', queryset=Movie.objects.all(), write_only=True
     )
     cinema_hall = CinemaHallSerializer(read_only=True)
     cinema_hall_id = serializers.PrimaryKeyRelatedField(
-        source="cinema_hall",
-        queryset=CinemaHall.objects.all(),
-        write_only=True
+        source='cinema_hall', queryset=CinemaHall.objects.all(), write_only=True
     )
 
     class Meta:
         model = MovieSession
         fields = [
             "id", "show_time", "movie", "movie_id",
-            "cinema_hall", "cinema_hall_id"
+            "cinema_hall", "cinema_hall_id",
+            "movie_title", "cinema_hall_name", "cinema_hall_capacity"
         ]
+
 
 
 class TicketSerializer(serializers.ModelSerializer):
@@ -116,7 +118,7 @@ class TicketSerializer(serializers.ModelSerializer):
 
 class OrderSerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField(read_only=True)
-    tickets = TicketSerializer(read_only=True, many=True)
+    tickets = TicketSerializer(many=True)
 
     class Meta:
         model = Order
@@ -132,6 +134,7 @@ class OrderSerializer(serializers.ModelSerializer):
             ticket_data["order"] = order
             Ticket.objects.create(**ticket_data)
         return order
+
 
 
 class UserSerializer(serializers.ModelSerializer):
